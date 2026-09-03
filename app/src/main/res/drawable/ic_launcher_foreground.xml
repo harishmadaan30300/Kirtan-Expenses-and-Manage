@@ -1,0 +1,49 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Diya lamp base / bowl -->
+    <path
+        android:pathData="M30,60 C30,75 42,79 54,79 C66,79 78,75 78,60 C78,57 70,58 54,58 C38,58 30,57 30,60 Z"
+        android:fillColor="#FFF8E1" />
+
+    <!-- Diya inner bowl depth -->
+    <path
+        android:pathData="M34,60 C34,71 44,74 54,74 C64,74 74,71 74,60 C74,58 64,59 54,59 C44,59 34,58 34,60 Z"
+        android:fillColor="#FFE082" />
+
+    <!-- Stand / lotus base -->
+    <path
+        android:pathData="M44,79 L40,84 L68,84 L64,79 Z"
+        android:fillColor="#FFD54F" />
+
+    <!-- Sacred flame outer glow -->
+    <path
+        android:pathData="M54,28 C54,28 66,42 66,52 C66,58 61,63 54,63 C47,63 42,58 42,52 C42,42 54,28 54,28 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="54"
+                android:startY="28"
+                android:endX="54"
+                android:endY="63"
+                android:type="linear">
+                <item android:color="#FFF9C4" android:offset="0.0" />
+                <item android:color="#FFB74D" android:offset="0.5" />
+                <item android:color="#FF9800" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Sacred flame inner bright core -->
+    <path
+        android:pathData="M54,36 C54,36 60,45 60,52 C60,55.5 57.5,58.5 54,58.5 C50.5,58.5 48,55.5 48,52 C48,45 54,36 54,36 Z"
+        android:fillColor="#FFFFFF" />
+
+    <!-- Devotional Tilak / Auspicious dot above flame -->
+    <path
+        android:pathData="M54,22 A2.5,2.5 0 1 0 54,27 A2.5,2.5 0 1 0 54,22"
+        android:fillColor="#FFFDE7" />
+</vector>

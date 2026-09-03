@@ -1,0 +1,6 @@
+{
+  "name": "Kirtan Seva",
+  "description": "Manage multiple kirtan events, track donations with donor details (Name, Amount, Mobile, UPI/Cash), record expenses, and view transparency reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
