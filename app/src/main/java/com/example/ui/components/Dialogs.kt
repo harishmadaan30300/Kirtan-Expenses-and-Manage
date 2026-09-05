@@ -29,7 +29,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
@@ -1623,16 +1625,10 @@ fun SettingsDialog(
     val context = LocalContext.current
 
     var showResetConfirmDialog by remember { mutableStateOf(false) }
-    var restoreTargetFile by remember { mutableStateOf<File?>(null) }
-    var restoreTargetUri by remember { mutableStateOf<Uri?>(null) }
-
-    val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            restoreTargetUri = uri
-        }
-    }
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    var showThemeModeDialog by remember { mutableStateOf(false) }
+    var showPaletteDialog by remember { mutableStateOf(false) }
+    var showBackupRestoreDialog by remember { mutableStateOf(false) }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -1681,498 +1677,567 @@ fun SettingsDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 Divider(color = colors.divider, thickness = 0.8.dp)
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                // SECTION 1: LANGUAGE SELECTION
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                // =============================================================
+                // GROUP 1: APPEARANCE & THEMES (दिखावट एवं थीम)
+                // =============================================================
+                Text(
+                    text = if (currentLanguage == AppLanguage.ENGLISH) "🎨 APPEARANCE & THEME" else "🎨 दिखावट एवं थीम (Appearance & Theme)",
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.primary,
+                    letterSpacing = 0.6.sp,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+                )
+
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = colors.canvas,
+                    border = BorderStroke(1.dp, colors.cardBorder),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(text = "🌐", fontSize = 16.sp)
-                    Text(
-                        text = strings.languageSectionTitle,
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.textPrimary
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    val languages = listOf(
-                        Triple(AppLanguage.HINDI, "हिन्दी (Hindi)", "पूर्णतः हिन्दी में सभी मेनू एवं रसीदें"),
-                        Triple(AppLanguage.ENGLISH, "English", "All accounts, slips, and tabs in English"),
-                        Triple(AppLanguage.HINGLISH, "हिंग्लिश (Hinglish)", "Daan, Kharcha & Seva bilingual mix")
-                    )
-
-                    languages.forEach { (lang, title, subtitle) ->
-                        val isSelected = currentLanguage == lang
-                        Surface(
-                            shape = RoundedCornerShape(14.dp),
-                            color = if (isSelected) colors.primaryContainer.copy(alpha = if (colors.isDark) 0.4f else 0.6f) else colors.canvas,
-                            border = BorderStroke(
-                                width = if (isSelected) 1.5.dp else 1.dp,
-                                color = if (isSelected) colors.primary else colors.cardBorder
-                            ),
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        // Option 1: Theme Mode
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(14.dp))
-                                .clickable { onLanguageSelected(lang) }
-                                .testTag("lang_option_${lang.code}")
+                                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                                .clickable { showThemeModeDialog = true }
+                                .padding(horizontal = 14.dp, vertical = 12.dp)
+                                .testTag("theme_mode_setting_row"),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = colors.primaryContainer.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(text = currentThemeMode.icon, fontSize = 18.sp)
+                                    }
+                                }
+                                Column {
                                     Text(
-                                        text = title,
-                                        fontSize = 13.5.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isSelected) colors.primary else colors.textPrimary
+                                        text = strings.themeSectionTitle,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.textPrimary
                                     )
                                     Text(
-                                        text = subtitle,
-                                        fontSize = 11.sp,
+                                        text = currentThemeMode.getTitle(currentLanguage),
+                                        fontSize = 11.5.sp,
                                         color = colors.textSecondary
                                     )
                                 }
-                                if (isSelected) {
+                            }
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = colors.primaryContainer.copy(alpha = 0.5f)
+                                ) {
                                     Text(
-                                        text = "✓",
-                                        color = colors.primary,
+                                        text = currentThemeMode.getTitle(currentLanguage),
+                                        fontSize = 11.5.sp,
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 16.sp
+                                        color = colors.primary,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = "Select Theme",
+                                    tint = colors.textSecondary
+                                )
+                            }
+                        }
+
+                        Divider(color = colors.divider.copy(alpha = 0.6f), thickness = 0.6.dp, modifier = Modifier.padding(horizontal = 14.dp))
+
+                        // Option 2: Devotional Palette
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp))
+                                .clickable { showPaletteDialog = true }
+                                .padding(horizontal = 14.dp, vertical = 12.dp)
+                                .testTag("devotional_palette_setting_row"),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = currentPalette.primaryColor.copy(alpha = 0.25f),
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(20.dp)
+                                                .clip(CircleShape)
+                                                .background(currentPalette.primaryColor)
+                                        )
+                                    }
+                                }
+                                Column {
+                                    Text(
+                                        text = strings.paletteSectionTitle,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.textPrimary
+                                    )
+                                    Text(
+                                        text = currentPalette.getTitle(currentLanguage),
+                                        fontSize = 11.5.sp,
+                                        color = colors.textSecondary
                                     )
                                 }
                             }
-                        }
-                    }
-                }
 
-                Spacer(modifier = Modifier.height(18.dp))
-                Divider(color = colors.divider, thickness = 0.8.dp)
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // SECTION 2: THEME MODE SELECTION
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(text = "🎨", fontSize = 16.sp)
-                    Text(
-                        text = strings.themeSectionTitle,
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.textPrimary
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    ThemeMode.values().forEach { mode ->
-                        val isSelected = currentThemeMode == mode
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (isSelected) colors.primaryContainer.copy(alpha = if (colors.isDark) 0.5f else 0.7f) else colors.canvas,
-                            border = BorderStroke(
-                                width = if (isSelected) 1.5.dp else 1.dp,
-                                color = if (isSelected) colors.primary else colors.cardBorder
-                            ),
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable { onThemeModeSelected(mode) }
-                                .testTag("theme_mode_${mode.name.lowercase()}")
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 6.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Text(text = mode.icon, fontSize = 20.sp)
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = if (currentLanguage == AppLanguage.ENGLISH) mode.titleEn else mode.titleHi,
-                                    fontSize = 11.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isSelected) colors.primary else colors.textPrimary,
-                                    maxLines = 1
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = colors.primaryContainer.copy(alpha = 0.5f)
+                                ) {
+                                    Text(
+                                        text = currentPalette.getTitle(currentLanguage),
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.primary,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = "Select Palette",
+                                    tint = colors.textSecondary
                                 )
                             }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(18.dp))
-                Divider(color = colors.divider, thickness = 0.8.dp)
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // SECTION 3: DEVOTIONAL PALETTE
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                // =============================================================
+                // GROUP 2: LANGUAGE & REGION (भाषा एवं क्षेत्र)
+                // =============================================================
+                Text(
+                    text = if (currentLanguage == AppLanguage.ENGLISH) "🌐 LANGUAGE & REGION" else "🌐 भाषा एवं क्षेत्र (Language & Region)",
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.primary,
+                    letterSpacing = 0.6.sp,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+                )
+
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = colors.canvas,
+                    border = BorderStroke(1.dp, colors.cardBorder),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(text = "🌸", fontSize = 16.sp)
-                    Text(
-                        text = strings.paletteSectionTitle,
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.textPrimary
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    DevotionalPalette.values().forEach { palette ->
-                        val isSelected = currentPalette == palette
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (isSelected) colors.primaryContainer.copy(alpha = if (colors.isDark) 0.35f else 0.5f) else colors.canvas,
-                            border = BorderStroke(
-                                width = if (isSelected) 1.5.dp else 1.dp,
-                                color = if (isSelected) colors.primary else colors.cardBorder
-                            ),
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        // Option 1: App Language
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable { onPaletteSelected(palette) }
-                                .testTag("palette_${palette.name.lowercase()}")
+                                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                                .clickable { showLanguageDialog = true }
+                                .padding(horizontal = 14.dp, vertical = 12.dp)
+                                .testTag("app_language_setting_row"),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(20.dp)
-                                            .clip(CircleShape)
-                                            .background(palette.primaryColor)
-                                    )
-                                    Spacer(modifier = Modifier.width(10.dp))
+                                Surface(
+                                    shape = CircleShape,
+                                    color = colors.primaryContainer.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(text = "🌐", fontSize = 18.sp)
+                                    }
+                                }
+                                Column {
                                     Text(
-                                        text = if (currentLanguage == AppLanguage.ENGLISH) palette.titleEn else palette.titleHi,
-                                        fontSize = 12.5.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        text = strings.languageSectionTitle,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.SemiBold,
                                         color = colors.textPrimary
                                     )
-                                }
-                                if (isSelected) {
                                     Text(
-                                        text = "● चयनित",
-                                        color = colors.primary,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 11.sp
+                                        text = currentLanguage.displayName,
+                                        fontSize = 11.5.sp,
+                                        color = colors.textSecondary
                                     )
                                 }
+                            }
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = colors.primaryContainer.copy(alpha = 0.5f)
+                                ) {
+                                    Text(
+                                        text = currentLanguage.shortBadge,
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.primary,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = "Select Language",
+                                    tint = colors.textSecondary
+                                )
+                            }
+                        }
+
+                        Divider(color = colors.divider.copy(alpha = 0.6f), thickness = 0.6.dp, modifier = Modifier.padding(horizontal = 14.dp))
+
+                        // Option 2: Currency Standard (₹ INR)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp))
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = colors.primaryContainer.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(text = "₹", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = colors.primary)
+                                    }
+                                }
+                                Column {
+                                    Text(
+                                        text = if (currentLanguage == AppLanguage.ENGLISH) "Currency Format" else "मुद्रा प्रारूप (Currency)",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.textPrimary
+                                    )
+                                    Text(
+                                        text = if (currentLanguage == AppLanguage.ENGLISH) "Indian Rupee standard for accounting" else "भारतीय रुपया (₹ INR) मानक प्रारूप",
+                                        fontSize = 11.5.sp,
+                                        color = colors.textSecondary
+                                    )
+                                }
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = colors.primaryContainer.copy(alpha = 0.5f)
+                            ) {
+                                Text(
+                                    text = "₹ INR",
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
                             }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(18.dp))
-                Divider(color = colors.divider, thickness = 0.8.dp)
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // SECTION 4: AUTOMATIC DAILY BACKUP IN MOBILE
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                // =============================================================
+                // GROUP 3: DATA & BACKUP (डेटा सुरक्षा एवं बैकअप)
+                // =============================================================
+                Text(
+                    text = if (currentLanguage == AppLanguage.ENGLISH) "📦 DATA & BACKUP" else "📦 डेटा सुरक्षा एवं बैकअप (Data & Backup)",
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.primary,
+                    letterSpacing = 0.6.sp,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+                )
+
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = colors.canvas,
+                    border = BorderStroke(1.dp, colors.cardBorder),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        // Option 1: Backup & Restore Hub (Full Hub)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                                .clickable { showBackupRestoreDialog = true }
+                                .padding(horizontal = 14.dp, vertical = 12.dp)
+                                .testTag("backup_restore_setting_row"),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = colors.primaryContainer.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(text = "📦", fontSize = 18.sp)
+                                    }
+                                }
+                                Column {
+                                    Text(
+                                        text = if (currentLanguage == AppLanguage.ENGLISH) "Backup & Restore Hub" else "बैकअप एवं रीस्टोर केंद्र (Hub)",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.textPrimary
+                                    )
+                                    Text(
+                                        text = if (lastBackupTime > 0) {
+                                            val dateStr = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(Date(lastBackupTime))
+                                            "${strings.lastBackupLabel} $dateStr"
+                                        } else {
+                                            if (currentLanguage == AppLanguage.ENGLISH) "Local storage, auto-backup & JSON export" else "लोकल बैकअप, ऑटो-सेव एवं JSON शेयर"
+                                        },
+                                        fontSize = 11.5.sp,
+                                        color = colors.textSecondary
+                                    )
+                                }
+                            }
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = if (autoBackupEnabled) DonationGreenLight else colors.primaryContainer.copy(alpha = 0.4f)
+                                ) {
+                                    Text(
+                                        text = if (autoBackupEnabled) {
+                                            if (currentLanguage == AppLanguage.ENGLISH) "Auto ON" else "ऑटो चालू"
+                                        } else {
+                                            if (currentLanguage == AppLanguage.ENGLISH) "Auto OFF" else "ऑटो बंद"
+                                        },
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (autoBackupEnabled) DonationGreen else colors.textSecondary,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = "Open Backup Hub",
+                                    tint = colors.textSecondary
+                                )
+                            }
+                        }
+
+                        Divider(color = colors.divider.copy(alpha = 0.6f), thickness = 0.6.dp, modifier = Modifier.padding(horizontal = 14.dp))
+
+                        // Option 2: Quick Backup Button
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp))
+                                .clickable { onBackupNow() }
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = DonationGreenLight,
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(text = "💾", fontSize = 18.sp)
+                                    }
+                                }
+                                Column {
+                                    Text(
+                                        text = if (currentLanguage == AppLanguage.ENGLISH) "Quick Backup Now" else "तत्काल बैकअप लें (Backup Now)",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.textPrimary
+                                    )
+                                    Text(
+                                        text = if (currentLanguage == AppLanguage.ENGLISH) "Save snapshot to device storage now" else "वर्तमान सभी डेटा का फोन में तत्काल बैकअप बनाएं",
+                                        fontSize = 11.5.sp,
+                                        color = colors.textSecondary
+                                    )
+                                }
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = colors.primary
+                            ) {
+                                Text(
+                                    text = if (currentLanguage == AppLanguage.ENGLISH) "+ Backup" else "+ बैकअप",
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // =============================================================
+                // GROUP 4: SYSTEM & RESET (सुरक्षा एवं रीसेट)
+                // =============================================================
+                Text(
+                    text = if (currentLanguage == AppLanguage.ENGLISH) "⚠️ SYSTEM & RESET" else "⚠️ सुरक्षा एवं रीसेट (System & Reset)",
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = ExpenseRed,
+                    letterSpacing = 0.6.sp,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+                )
+
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = colors.canvas,
+                    border = BorderStroke(1.dp, ExpenseRed.copy(alpha = 0.35f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { showResetConfirmDialog = true }
+                        .testTag("default_reset_button")
                 ) {
                     Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.weight(1f)
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(text = "📱", fontSize = 16.sp)
-                        Column {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = ExpenseRedLight,
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(text = "⚠️", fontSize = 18.sp)
+                                }
+                            }
+                            Column {
+                                Text(
+                                    text = strings.resetSectionTitle,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = ExpenseRed
+                                )
+                                Text(
+                                    text = if (currentLanguage == AppLanguage.ENGLISH) "Reset data or reload sample data safely" else "डेटा खाली करें या सैंपल डेटा लोड करें (सुरक्षा युक्त)",
+                                    fontSize = 11.5.sp,
+                                    color = colors.textSecondary
+                                )
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = ExpenseRedLight,
+                            border = BorderStroke(0.8.dp, ExpenseRed.copy(alpha = 0.5f))
+                        ) {
                             Text(
-                                text = strings.autoBackupTitle,
-                                fontSize = 13.5.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.textPrimary
-                            )
-                            Text(
-                                text = strings.autoBackupDesc,
-                                fontSize = 11.sp,
-                                color = colors.textSecondary
+                                text = strings.resetBtn,
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = ExpenseRed,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
                     }
-                    Switch(
-                        checked = autoBackupEnabled,
-                        onCheckedChange = onToggleAutoBackup,
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = colors.primary,
-                            uncheckedThumbColor = colors.textSecondary,
-                            uncheckedTrackColor = colors.canvas
-                        ),
-                        modifier = Modifier.testTag("auto_backup_switch")
-                    )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // Last backup timestamp banner
+                // =============================================================
+                // GROUP 5: ABOUT & INFORMATION (ऐप परिचय)
+                // =============================================================
                 Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = colors.canvas,
-                    border = BorderStroke(1.dp, colors.cardBorder),
+                    shape = RoundedCornerShape(14.dp),
+                    color = colors.canvas.copy(alpha = 0.5f),
+                    border = BorderStroke(0.8.dp, colors.cardBorder.copy(alpha = 0.6f)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Text(
-                            text = strings.lastBackupLabel,
-                            fontSize = 11.5.sp,
-                            color = colors.textSecondary
-                        )
-                        Text(
-                            text = if (lastBackupTime > 0) {
-                                SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date(lastBackupTime))
-                            } else {
-                                if (currentLanguage == AppLanguage.ENGLISH) "No backup yet" else "अभी तक कोई नहीं"
-                            },
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = if (lastBackupTime > 0) colors.primary else colors.textSecondary
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Manual Backup Now Button
-                Button(
-                    onClick = onBackupNow,
-                    colors = ButtonDefaults.buttonColors(containerColor = colors.primary),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("backup_now_button")
-                ) {
-                    Text(
-                        text = strings.backupNowBtn,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White,
-                        fontSize = 12.5.sp
-                    )
-                }
-
-                // Local Backups List on Mobile
-                if (localBackups.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = strings.localBackupsTitle,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.textSecondary
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        localBackups.take(4).forEach { backup ->
-                            Surface(
-                                shape = RoundedCornerShape(10.dp),
-                                color = colors.canvas,
-                                border = BorderStroke(0.8.dp, colors.cardBorder),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 10.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Surface(
-                                                shape = RoundedCornerShape(4.dp),
-                                                color = if (backup.isAuto) colors.primary.copy(alpha = 0.15f) else DonationGreenLight
-                                            ) {
-                                                Text(
-                                                    text = if (backup.isAuto) "ऑटो" else "मैनुअल",
-                                                    fontSize = 9.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = if (backup.isAuto) colors.primary else DonationGreen,
-                                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                                                )
-                                            }
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = backup.formattedDate,
-                                                fontSize = 11.5.sp,
-                                                fontWeight = FontWeight.Medium,
-                                                color = colors.textPrimary
-                                            )
-                                        }
-                                        Text(
-                                            text = "${backup.kirtanCount} कीर्तन • ${backup.donationCount} दान • ${backup.expenseCount} खर्च",
-                                            fontSize = 10.sp,
-                                            color = colors.textSecondary
-                                        )
-                                    }
-
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        // Share backup button
-                                        IconButton(
-                                            onClick = {
-                                                try {
-                                                    val intent = Intent(Intent.ACTION_SEND).apply {
-                                                        type = "text/plain"
-                                                        putExtra(Intent.EXTRA_SUBJECT, "Kirtan Seva Backup")
-                                                        putExtra(Intent.EXTRA_TEXT, backup.file.readText())
-                                                    }
-                                                    context.startActivity(Intent.createChooser(intent, "बैकअप शेयर करें"))
-                                                } catch (e: Exception) {
-                                                    e.printStackTrace()
-                                                }
-                                            },
-                                            modifier = Modifier.size(30.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Share,
-                                                contentDescription = "Share",
-                                                tint = colors.textSecondary,
-                                                modifier = Modifier.size(15.dp)
-                                            )
-                                        }
-
-                                        // Restore button
-                                        OutlinedButton(
-                                            onClick = { restoreTargetFile = backup.file },
-                                            shape = RoundedCornerShape(8.dp),
-                                            border = BorderStroke(1.dp, colors.primary),
-                                            modifier = Modifier
-                                                .height(28.dp)
-                                                .padding(horizontal = 2.dp)
-                                        ) {
-                                            Text(
-                                                text = strings.restoreBtn,
-                                                fontSize = 10.sp,
-                                                color = colors.primary,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
-
-                                        // Delete button
-                                        IconButton(
-                                            onClick = { onDeleteBackup(backup.file) },
-                                            modifier = Modifier.size(30.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Delete,
-                                                contentDescription = "Delete",
-                                                tint = ExpenseRed.copy(alpha = 0.7f),
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                        Text(text = "🪔", fontSize = 22.sp)
+                        Column {
+                            Text(
+                                text = "श्री श्याम संकीर्तन सेवा (Kirtan Seva)",
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.primary
+                            )
+                            Text(
+                                text = "v1.3.0 • 100% ऑफलाइन सुरक्षित • ॥ हारे का सहारा ॥",
+                                fontSize = 11.sp,
+                                color = colors.textSecondary
+                            )
                         }
                     }
-                }
-
-                Spacer(modifier = Modifier.height(18.dp))
-                Divider(color = colors.divider, thickness = 0.8.dp)
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // SECTION 5: RESTORE FROM MOBILE (FILE PICKER)
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(text = "📂", fontSize = 16.sp)
-                    Text(
-                        text = strings.restoreSectionTitle,
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.textPrimary
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedButton(
-                    onClick = {
-                        try {
-                            filePickerLauncher.launch(arrayOf("application/json", "text/*", "*/*"))
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, colors.primary.copy(alpha = 0.8f)),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("choose_backup_file_button")
-                ) {
-                    Text(
-                        text = strings.restoreFromFileBtn,
-                        fontWeight = FontWeight.Medium,
-                        color = colors.primary,
-                        fontSize = 12.5.sp
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(18.dp))
-                Divider(color = colors.divider, thickness = 0.8.dp)
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // SECTION 6: DEFAULT RESET
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(text = "⚠️", fontSize = 16.sp)
-                    Text(
-                        text = strings.resetSectionTitle,
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = ExpenseRed
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedButton(
-                    onClick = { showResetConfirmDialog = true },
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, ExpenseRed.copy(alpha = 0.6f)),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = ExpenseRed),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("default_reset_button")
-                ) {
-                    Text(
-                        text = strings.resetBtn,
-                        fontWeight = FontWeight.Bold,
-                        color = ExpenseRed,
-                        fontSize = 12.5.sp
-                    )
                 }
 
                 Spacer(modifier = Modifier.height(18.dp))
@@ -2195,70 +2260,6 @@ fun SettingsDialog(
                 }
             }
         }
-    }
-
-    // Confirm Restore from File Dialog
-    if (restoreTargetFile != null) {
-        val file = restoreTargetFile!!
-        AlertDialog(
-            onDismissRequest = { restoreTargetFile = null },
-            title = { Text(text = "डेटा रीस्टोर की पुष्टि (Confirm Restore)", fontWeight = FontWeight.Bold, fontSize = 16.sp) },
-            text = {
-                Text(
-                    text = "क्या आप '${file.name}' बैकअप फ़ाइल से डेटा रीस्टोर करना चाहते हैं?\n\nआपकी सुरक्षा के लिए मौजूदा डेटा का बैकअप स्वतः सुरक्षित कर लिया जाएगा।",
-                    fontSize = 13.sp
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        onRestoreFromFile(file)
-                        restoreTargetFile = null
-                        onDismiss()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = colors.primary)
-                ) {
-                    Text(text = strings.confirmBtn, color = Color.White)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { restoreTargetFile = null }) {
-                    Text(text = strings.cancelBtn)
-                }
-            }
-        )
-    }
-
-    // Confirm Restore from Uri Dialog
-    if (restoreTargetUri != null) {
-        val uri = restoreTargetUri!!
-        AlertDialog(
-            onDismissRequest = { restoreTargetUri = null },
-            title = { Text(text = "डेटा रीस्टोर की पुष्टि (Confirm Restore)", fontWeight = FontWeight.Bold, fontSize = 16.sp) },
-            text = {
-                Text(
-                    text = "क्या आप चुनी गई फ़ाइल से सारा कीर्तन, दान और खर्च डेटा रीस्टोर करना चाहते हैं?\n\nसुरक्षा हेतु वर्तमान डेटा का स्वतः बैकअप लिया जाएगा।",
-                    fontSize = 13.sp
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        onRestoreFromUri(uri)
-                        restoreTargetUri = null
-                        onDismiss()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = colors.primary)
-                ) {
-                    Text(text = strings.confirmBtn, color = Color.White)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { restoreTargetUri = null }) {
-                    Text(text = strings.cancelBtn)
-                }
-            }
-        )
     }
 
     // Default Reset Confirmation Dialog
@@ -2334,6 +2335,1074 @@ fun SettingsDialog(
                 }
             },
             dismissButton = null
+        )
+    }
+
+    if (showLanguageDialog) {
+        LanguageSelectionDialog(
+            currentLanguage = currentLanguage,
+            onLanguageSelected = {
+                onLanguageSelected(it)
+                showLanguageDialog = false
+            },
+            onDismiss = { showLanguageDialog = false }
+        )
+    }
+
+    if (showThemeModeDialog) {
+        ThemeModeSelectionDialog(
+            currentMode = currentThemeMode,
+            currentLanguage = currentLanguage,
+            onModeSelected = {
+                onThemeModeSelected(it)
+                showThemeModeDialog = false
+            },
+            onDismiss = { showThemeModeDialog = false }
+        )
+    }
+
+    if (showPaletteDialog) {
+        DevotionalPaletteSelectionDialog(
+            currentPalette = currentPalette,
+            currentLanguage = currentLanguage,
+            onPaletteSelected = {
+                onPaletteSelected(it)
+                showPaletteDialog = false
+            },
+            onDismiss = { showPaletteDialog = false }
+        )
+    }
+
+    if (showBackupRestoreDialog) {
+        BackupRestoreDialog(
+            currentLanguage = currentLanguage,
+            autoBackupEnabled = autoBackupEnabled,
+            lastBackupTime = lastBackupTime,
+            localBackups = localBackups,
+            onToggleAutoBackup = onToggleAutoBackup,
+            onBackupNow = onBackupNow,
+            onRestoreFromFile = {
+                onRestoreFromFile(it)
+                showBackupRestoreDialog = false
+                onDismiss()
+            },
+            onRestoreFromUri = {
+                onRestoreFromUri(it)
+                showBackupRestoreDialog = false
+                onDismiss()
+            },
+            onDeleteBackup = onDeleteBackup,
+            onDismiss = { showBackupRestoreDialog = false }
+        )
+    }
+}
+
+// -----------------------------------------------------------------------------
+// LANGUAGE SELECTION DIALOG (OPENED ON TOUCHING "APP LANGUAGE")
+// -----------------------------------------------------------------------------
+@Composable
+fun LanguageSelectionDialog(
+    currentLanguage: AppLanguage,
+    onLanguageSelected: (AppLanguage) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val colors = LocalAppColors.current
+    val strings = Localization.get(currentLanguage)
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = colors.cardBg),
+            border = BorderStroke(1.dp, colors.cardBorder),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp)
+                .testTag("language_selection_dialog")
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = colors.primaryContainer.copy(alpha = 0.5f),
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(text = "🌐", fontSize = 20.sp)
+                            }
+                        }
+                        Column {
+                            Text(
+                                text = "App Language",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            )
+                            Text(
+                                text = strings.languageSectionTitle,
+                                fontSize = 11.5.sp,
+                                color = colors.textSecondary
+                            )
+                        }
+                    }
+
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .testTag("close_language_dialog")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = colors.textSecondary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+                Divider(color = colors.divider, thickness = 0.8.dp)
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Language List Options
+                val languages = listOf(
+                    Triple(AppLanguage.HINDI, "हिन्दी (Hindi)", "पूर्णतः हिन्दी में सभी मेनू, रसीदें एवं खाते"),
+                    Triple(AppLanguage.ENGLISH, "English", "All accounts, slips, and tabs in English"),
+                    Triple(AppLanguage.HINGLISH, "हिंग्लिश (Hinglish)", "Daan, Kharcha & Seva bilingual mix")
+                )
+
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    languages.forEach { (lang, title, subtitle) ->
+                        val isSelected = currentLanguage == lang
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (isSelected) colors.primaryContainer.copy(alpha = if (colors.isDark) 0.45f else 0.65f) else colors.canvas,
+                            border = BorderStroke(
+                                width = if (isSelected) 1.8.dp else 1.dp,
+                                color = if (isSelected) colors.primary else colors.cardBorder
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable {
+                                    onLanguageSelected(lang)
+                                    onDismiss()
+                                }
+                                .testTag("select_lang_${lang.code}")
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Text(
+                                        text = when (lang) {
+                                            AppLanguage.HINDI -> "🇮🇳"
+                                            AppLanguage.ENGLISH -> "🇬🇧"
+                                            AppLanguage.HINGLISH -> "🌐"
+                                        },
+                                        fontSize = 20.sp
+                                    )
+                                    Column {
+                                        Text(
+                                            text = title,
+                                            fontSize = 14.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (isSelected) colors.primary else colors.textPrimary
+                                        )
+                                        Text(
+                                            text = subtitle,
+                                            fontSize = 11.sp,
+                                            color = colors.textSecondary
+                                        )
+                                    }
+                                }
+
+                                if (isSelected) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = colors.primary,
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Selected",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(22.dp)
+                                            .border(1.5.dp, colors.cardBorder, CircleShape)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = onDismiss,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.primary),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .testTag("done_language_button")
+                ) {
+                    Text(
+                        text = strings.doneBtn,
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// THEME MODE SELECTION DIALOG (OPENED ON TOUCHING "THEME MODE")
+// -----------------------------------------------------------------------------
+@Composable
+fun ThemeModeSelectionDialog(
+    currentMode: ThemeMode,
+    currentLanguage: AppLanguage,
+    onModeSelected: (ThemeMode) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val colors = LocalAppColors.current
+    val strings = Localization.get(currentLanguage)
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = colors.cardBg),
+            border = BorderStroke(1.dp, colors.cardBorder),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = colors.primaryContainer.copy(alpha = 0.5f),
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(text = "🎨", fontSize = 20.sp)
+                            }
+                        }
+                        Column {
+                            Text(
+                                text = strings.themeSectionTitle,
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            )
+                            Text(
+                                text = currentMode.getTitle(currentLanguage),
+                                fontSize = 11.5.sp,
+                                color = colors.textSecondary
+                            )
+                        }
+                    }
+
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .testTag("close_theme_dialog")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = colors.textSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Options list
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    val modes = listOf(
+                        Triple(ThemeMode.SYSTEM, ThemeMode.SYSTEM.getTitle(currentLanguage), "फोन की डार्क/लाइट थीम सेटिंग के अनुसार"),
+                        Triple(ThemeMode.LIGHT, ThemeMode.LIGHT.getTitle(currentLanguage), "उज्ज्वल एवं स्वच्छ दिन थीम"),
+                        Triple(ThemeMode.DARK, ThemeMode.DARK.getTitle(currentLanguage), "आंखों के लिए आरामदायक गहरा रंग")
+                    )
+
+                    modes.forEach { (mode, title, subtitle) ->
+                        val isSelected = currentMode == mode
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (isSelected) colors.primaryContainer.copy(alpha = if (colors.isDark) 0.45f else 0.65f) else colors.canvas,
+                            border = BorderStroke(
+                                width = if (isSelected) 1.5.dp else 1.dp,
+                                color = if (isSelected) colors.primary else colors.cardBorder
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable {
+                                    onModeSelected(mode)
+                                }
+                                .testTag("select_theme_mode_${mode.name.lowercase()}")
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Text(
+                                        text = mode.icon,
+                                        fontSize = 22.sp
+                                    )
+                                    Column {
+                                        Text(
+                                            text = title,
+                                            fontSize = 14.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (isSelected) colors.primary else colors.textPrimary
+                                        )
+                                        Text(
+                                            text = subtitle,
+                                            fontSize = 11.sp,
+                                            color = colors.textSecondary
+                                        )
+                                    }
+                                }
+
+                                if (isSelected) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = colors.primary,
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Selected",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(22.dp)
+                                            .border(1.5.dp, colors.cardBorder, CircleShape)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = onDismiss,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.primary),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .testTag("done_theme_mode_button")
+                ) {
+                    Text(
+                        text = strings.doneBtn,
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// DEVOTIONAL PALETTE SELECTION DIALOG (OPENED ON TOUCHING "DEVOTIONAL PALETTE")
+// -----------------------------------------------------------------------------
+@Composable
+fun DevotionalPaletteSelectionDialog(
+    currentPalette: DevotionalPalette,
+    currentLanguage: AppLanguage,
+    onPaletteSelected: (DevotionalPalette) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val colors = LocalAppColors.current
+    val strings = Localization.get(currentLanguage)
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = colors.cardBg),
+            border = BorderStroke(1.dp, colors.cardBorder),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = currentPalette.primaryColor.copy(alpha = 0.25f),
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(22.dp)
+                                        .clip(CircleShape)
+                                        .background(currentPalette.primaryColor)
+                                )
+                            }
+                        }
+                        Column {
+                            Text(
+                                text = strings.paletteSectionTitle,
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            )
+                            Text(
+                                text = currentPalette.getTitle(currentLanguage),
+                                fontSize = 11.5.sp,
+                                color = colors.textSecondary
+                            )
+                        }
+                    }
+
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .testTag("close_palette_dialog")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = colors.textSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Options list
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    val palettes = listOf(
+                        Pair(DevotionalPalette.SAFFRON, "पारंपरिक दिव्य केसरिया एवं स्वर्ण रंग"),
+                        Pair(DevotionalPalette.VRINDAVAN, "पवित्र तुलसी दल एवं प्रकृति की हरीतिमा"),
+                        Pair(DevotionalPalette.SHYAM, "श्याम सुंदर एवं शांत नीला स्वरूप")
+                    )
+
+                    palettes.forEach { (palette, description) ->
+                        val isSelected = currentPalette == palette
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (isSelected) colors.primaryContainer.copy(alpha = if (colors.isDark) 0.45f else 0.65f) else colors.canvas,
+                            border = BorderStroke(
+                                width = if (isSelected) 1.5.dp else 1.dp,
+                                color = if (isSelected) colors.primary else colors.cardBorder
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable {
+                                    onPaletteSelected(palette)
+                                }
+                                .testTag("select_palette_${palette.name.lowercase()}")
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .clip(CircleShape)
+                                            .background(palette.primaryColor)
+                                            .border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = palette.getTitle(currentLanguage),
+                                            fontSize = 14.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (isSelected) colors.primary else colors.textPrimary
+                                        )
+                                        Text(
+                                            text = description,
+                                            fontSize = 11.sp,
+                                            color = colors.textSecondary
+                                        )
+                                    }
+                                }
+
+                                if (isSelected) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = colors.primary,
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Selected",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(22.dp)
+                                            .border(1.5.dp, colors.cardBorder, CircleShape)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = onDismiss,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.primary),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .testTag("done_palette_button")
+                ) {
+                    Text(
+                        text = strings.doneBtn,
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// BACKUP & RESTORE DIALOG (OPENED ON TOUCHING "BACKUP & RESTORE")
+// -----------------------------------------------------------------------------
+@Composable
+fun BackupRestoreDialog(
+    currentLanguage: AppLanguage,
+    autoBackupEnabled: Boolean,
+    lastBackupTime: Long,
+    localBackups: List<LocalBackupInfo>,
+    onToggleAutoBackup: (Boolean) -> Unit,
+    onBackupNow: () -> Unit,
+    onRestoreFromFile: (File) -> Unit,
+    onRestoreFromUri: (Uri) -> Unit,
+    onDeleteBackup: (File) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val colors = LocalAppColors.current
+    val strings = Localization.get(currentLanguage)
+
+    var restoreTargetFile by remember { mutableStateOf<File?>(null) }
+    var restoreTargetUri by remember { mutableStateOf<Uri?>(null) }
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            restoreTargetUri = uri
+        }
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = colors.cardBg),
+            border = BorderStroke(1.dp, colors.cardBorder),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(6.dp)
+                .testTag("backup_restore_dialog")
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = colors.primaryContainer.copy(alpha = 0.5f),
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(text = "📦", fontSize = 20.sp)
+                            }
+                        }
+                        Column {
+                            Text(
+                                text = if (currentLanguage == AppLanguage.ENGLISH) "Backup & Restore" else "बैकअप एवं रीस्टोर",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            )
+                            Text(
+                                text = if (currentLanguage == AppLanguage.ENGLISH) "Local phone backup & restore" else "फ़ोन में सुरक्षित बैकअप एवं रीस्टोर",
+                                fontSize = 11.5.sp,
+                                color = colors.textSecondary
+                            )
+                        }
+                    }
+
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .testTag("close_backup_dialog")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = colors.textSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // SECTION 1: AUTOMATIC DAILY BACKUP
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(text = "📱", fontSize = 16.sp)
+                        Column {
+                            Text(
+                                text = strings.autoBackupTitle,
+                                fontSize = 13.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.textPrimary
+                            )
+                            Text(
+                                text = strings.autoBackupDesc,
+                                fontSize = 11.sp,
+                                color = colors.textSecondary
+                            )
+                        }
+                    }
+                    Switch(
+                        checked = autoBackupEnabled,
+                        onCheckedChange = onToggleAutoBackup,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = colors.primary,
+                            uncheckedThumbColor = colors.textSecondary,
+                            uncheckedTrackColor = colors.canvas
+                        ),
+                        modifier = Modifier.testTag("auto_backup_switch")
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Last backup timestamp banner
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = colors.canvas,
+                    border = BorderStroke(1.dp, colors.cardBorder),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = strings.lastBackupLabel,
+                            fontSize = 11.5.sp,
+                            color = colors.textSecondary
+                        )
+                        Text(
+                            text = if (lastBackupTime > 0) {
+                                SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date(lastBackupTime))
+                            } else {
+                                if (currentLanguage == AppLanguage.ENGLISH) "No backup yet" else "अभी तक कोई नहीं"
+                            },
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (lastBackupTime > 0) colors.primary else colors.textSecondary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Manual Backup Now Button
+                Button(
+                    onClick = onBackupNow,
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.primary),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("backup_now_button")
+                ) {
+                    Text(
+                        text = strings.backupNowBtn,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                        fontSize = 13.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+                Divider(color = colors.divider, thickness = 0.8.dp)
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // SECTION 2: LOCAL BACKUPS LIST
+                Text(
+                    text = strings.localBackupsTitle,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.textPrimary
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (localBackups.isNotEmpty()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        localBackups.take(6).forEach { backup ->
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = colors.canvas,
+                                border = BorderStroke(0.8.dp, colors.cardBorder),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Surface(
+                                                shape = RoundedCornerShape(4.dp),
+                                                color = if (backup.isAuto) colors.primary.copy(alpha = 0.15f) else DonationGreenLight
+                                            ) {
+                                                Text(
+                                                    text = if (backup.isAuto) "ऑटो" else "मैनुअल",
+                                                    fontSize = 9.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = if (backup.isAuto) colors.primary else DonationGreen,
+                                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = backup.formattedDate,
+                                                fontSize = 11.5.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                color = colors.textPrimary
+                                            )
+                                        }
+                                        Text(
+                                            text = "${backup.kirtanCount} कीर्तन • ${backup.donationCount} दान • ${backup.expenseCount} खर्च",
+                                            fontSize = 10.sp,
+                                            color = colors.textSecondary
+                                        )
+                                    }
+
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        // Share backup button
+                                        IconButton(
+                                            onClick = {
+                                                try {
+                                                    val intent = Intent(Intent.ACTION_SEND).apply {
+                                                        type = "text/plain"
+                                                        putExtra(Intent.EXTRA_SUBJECT, "Kirtan Seva Backup")
+                                                        putExtra(Intent.EXTRA_TEXT, backup.file.readText())
+                                                    }
+                                                    context.startActivity(Intent.createChooser(intent, if (currentLanguage == AppLanguage.ENGLISH) "Share Backup" else "बैकअप शेयर करें"))
+                                                } catch (e: Exception) {
+                                                    e.printStackTrace()
+                                                }
+                                            },
+                                            modifier = Modifier.size(30.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Share,
+                                                contentDescription = "Share",
+                                                tint = colors.textSecondary,
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                        }
+
+                                        // Restore button
+                                        OutlinedButton(
+                                            onClick = { restoreTargetFile = backup.file },
+                                            shape = RoundedCornerShape(8.dp),
+                                            border = BorderStroke(1.dp, colors.primary),
+                                            modifier = Modifier
+                                                .height(28.dp)
+                                                .padding(horizontal = 2.dp)
+                                        ) {
+                                            Text(
+                                                text = strings.restoreBtn,
+                                                fontSize = 10.sp,
+                                                color = colors.primary,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+
+                                        // Delete button
+                                        IconButton(
+                                            onClick = { onDeleteBackup(backup.file) },
+                                            modifier = Modifier.size(30.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = "Delete",
+                                                tint = ExpenseRed.copy(alpha = 0.7f),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = colors.canvas,
+                        border = BorderStroke(0.8.dp, colors.cardBorder),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = strings.noLocalBackups,
+                            fontSize = 11.5.sp,
+                            color = colors.textSecondary,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+                Divider(color = colors.divider, thickness = 0.8.dp)
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // SECTION 3: RESTORE FROM MOBILE (FILE PICKER)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(text = "📂", fontSize = 16.sp)
+                    Text(
+                        text = strings.restoreSectionTitle,
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.textPrimary
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedButton(
+                    onClick = {
+                        try {
+                            filePickerLauncher.launch(arrayOf("application/json", "text/*", "*/*"))
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, colors.primary.copy(alpha = 0.8f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("choose_backup_file_button")
+                ) {
+                    Text(
+                        text = strings.restoreFromFileBtn,
+                        fontWeight = FontWeight.Medium,
+                        color = colors.primary,
+                        fontSize = 12.5.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Done Button
+                Button(
+                    onClick = onDismiss,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.primary),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .testTag("done_backup_dialog_button")
+                ) {
+                    Text(
+                        text = strings.doneBtn,
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        }
+    }
+
+    // Confirm Restore from File Dialog
+    if (restoreTargetFile != null) {
+        val file = restoreTargetFile!!
+        AlertDialog(
+            onDismissRequest = { restoreTargetFile = null },
+            title = { Text(text = "डेटा रीस्टोर की पुष्टि (Confirm Restore)", fontWeight = FontWeight.Bold, fontSize = 16.sp) },
+            text = {
+                Text(
+                    text = "क्या आप '${file.name}' बैकअप फ़ाइल से डेटा रीस्टोर करना चाहते हैं?\n\nआपकी सुरक्षा के लिए मौजूदा डेटा का बैकअप स्वतः सुरक्षित कर लिया जाएगा।",
+                    fontSize = 13.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onRestoreFromFile(file)
+                        restoreTargetFile = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.primary)
+                ) {
+                    Text(text = strings.confirmBtn, color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { restoreTargetFile = null }) {
+                    Text(text = strings.cancelBtn)
+                }
+            }
+        )
+    }
+
+    // Confirm Restore from Uri Dialog
+    if (restoreTargetUri != null) {
+        val uri = restoreTargetUri!!
+        AlertDialog(
+            onDismissRequest = { restoreTargetUri = null },
+            title = { Text(text = "डेटा रीस्टोर की पुष्टि (Confirm Restore)", fontWeight = FontWeight.Bold, fontSize = 16.sp) },
+            text = {
+                Text(
+                    text = "क्या आप चुनी गई फ़ाइल से सारा कीर्तन, दान और खर्च डेटा रीस्टोर करना चाहते हैं?\n\nसुरक्षा हेतु वर्तमान डेटा का स्वतः बैकअप लिया जाएगा।",
+                    fontSize = 13.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onRestoreFromUri(uri)
+                        restoreTargetUri = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.primary)
+                ) {
+                    Text(text = strings.confirmBtn, color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { restoreTargetUri = null }) {
+                    Text(text = strings.cancelBtn)
+                }
+            }
         )
     }
 }

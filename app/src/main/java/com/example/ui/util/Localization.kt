@@ -210,7 +210,37 @@ data class AppStringResources(
     
     // Receipt & Reports Titles
     val receiptTitle: String,
-    val reportTitle: String
+    val reportTitle: String,
+
+    // Booking Menu
+    val bookingOption: String,
+    val bookingSubtitle: String,
+    val bookingMenuTitle: String,
+    val bookingMenuDesc: String,
+    val openBookingMenu: String,
+    val addBookingTitle: String,
+    val editBookingTitle: String,
+    val vendorNameLabel: String,
+    val vendorNamePlaceholder: String,
+    val vendorNameError: String,
+    val contactNumberLabel: String,
+    val contactNumberPlaceholder: String,
+    val totalAmountLabel: String,
+    val advancePaidLabel: String,
+    val balanceDueLabel: String,
+    val bookingStatusLabel: String,
+    val bookingNotesLabel: String,
+    val noBookingsCategory: String,
+    val addBookingBtn: String,
+    val saveBookingBtn: String,
+    val statusConfirmed: String,
+    val statusAdvancePaid: String,
+    val statusPending: String,
+    val totalBookingCommitment: String,
+    val totalAdvancePaidTitle: String,
+    val totalBalanceRemainingTitle: String,
+    val callVendor: String,
+    val shareBookingSlip: String
 )
 
 object Localization {
@@ -225,7 +255,7 @@ object Localization {
                 tabDashboard = "डैशबोर्ड",
                 tabDonations = "दान",
                 tabExpenses = "खर्च",
-                tabHistory = "लॉग्स",
+                tabHistory = "इतिहास",
                 
                 allKirtans = "समस्त कीर्तन (कुल योग)",
                 switchKirtan = "बदलें",
@@ -408,7 +438,36 @@ object Localization {
                 resetBlankBtn = "पूर्णतः रिक्त रीसेट (खाली करें)",
                 
                 receiptTitle = "॥ श्री कीर्तन सेवा दान रसीद ॥",
-                reportTitle = "पारदर्शिता हिसाब-किताब रिपोर्ट"
+                reportTitle = "पारदर्शिता हिसाब-किताब रिपोर्ट",
+
+                bookingOption = "बुकिंग (Booking)",
+                bookingSubtitle = "गार्डन, सिंगर्स, साउंड, श्रृंगार, हलवाई एवं अन्य 13 सेवाएं",
+                bookingMenuTitle = "बुकिंग मेन्यू (Event Services)",
+                bookingMenuDesc = "कीर्तन एवं धार्मिक आयोजन हेतु सभी सेवा प्रदाताओं की व्यवस्था",
+                openBookingMenu = "मेन्यू देखें",
+                addBookingTitle = "नई बुकिंग जोड़ें",
+                editBookingTitle = "बुकिंग संपादित करें",
+                vendorNameLabel = "सेवा प्रदाता / वेंडर का नाम",
+                vendorNamePlaceholder = "उदा. श्री राधे टेंट & गार्डन / पं. राहुल शर्मा",
+                vendorNameError = "कृपया वेंडर अथवा सेवा प्रदाता का नाम दर्ज करें",
+                contactNumberLabel = "मोबाइल नंबर",
+                contactNumberPlaceholder = "उदा. 9876543210",
+                totalAmountLabel = "कुल तय राशि (₹)",
+                advancePaidLabel = "एडवांस जमा राशि (₹)",
+                balanceDueLabel = "शेष देय राशि",
+                bookingStatusLabel = "बुकिंग स्थिति",
+                bookingNotesLabel = "विशेष विवरण / आवश्यकताएं",
+                noBookingsCategory = "इस श्रेणी में अभी कोई बुकिंग दर्ज नहीं है। नीचे बटन दबाकर नई बुकिंग जोड़ें।",
+                addBookingBtn = "+ बुकिंग जोड़ें",
+                saveBookingBtn = "बुकिंग सुरक्षित करें",
+                statusConfirmed = "पुष्ट (Confirmed)",
+                statusAdvancePaid = "एडवांस दिया (Advance Paid)",
+                statusPending = "लंबित (Pending)",
+                totalBookingCommitment = "कुल बुकिंग बजट",
+                totalAdvancePaidTitle = "कुल दिया गया एडवांस",
+                totalBalanceRemainingTitle = "कुल बकाया शेष",
+                callVendor = "कॉल करें",
+                shareBookingSlip = "बुकिंग विवरण साझा करें"
             )
             
             AppLanguage.ENGLISH -> AppStringResources(
@@ -420,7 +479,7 @@ object Localization {
                 tabDashboard = "Dashboard",
                 tabDonations = "Donations",
                 tabExpenses = "Expenses",
-                tabHistory = "Logs & Events",
+                tabHistory = "History",
                 
                 allKirtans = "All Kirtans Aggregate",
                 switchKirtan = "Switch",
@@ -603,7 +662,36 @@ object Localization {
                 resetBlankBtn = "Reset to Blank (Clean State)",
                 
                 receiptTitle = "|| Shri Kirtan Seva Donation Receipt ||",
-                reportTitle = "Devotional Transparency Report"
+                reportTitle = "Devotional Transparency Report",
+
+                bookingOption = "Booking",
+                bookingSubtitle = "Garden/Hall, Singers, Sound, Light, Halwai & 13 Services",
+                bookingMenuTitle = "Booking Services Menu",
+                bookingMenuDesc = "Complete vendor management for kirtan and devotional events",
+                openBookingMenu = "Open Menu",
+                addBookingTitle = "Add New Booking",
+                editBookingTitle = "Edit Booking",
+                vendorNameLabel = "Vendor / Service Provider Name",
+                vendorNamePlaceholder = "e.g. Radhe Tent & Garden / Pt. Rahul Sharma",
+                vendorNameError = "Please enter vendor or artist name",
+                contactNumberLabel = "Contact Number",
+                contactNumberPlaceholder = "e.g. 9876543210",
+                totalAmountLabel = "Total Agreed Amount (₹)",
+                advancePaidLabel = "Advance Paid (₹)",
+                balanceDueLabel = "Balance Due",
+                bookingStatusLabel = "Booking Status",
+                bookingNotesLabel = "Notes & Requirements",
+                noBookingsCategory = "No bookings recorded for this service category yet. Tap below to add a new booking.",
+                addBookingBtn = "+ Add Booking",
+                saveBookingBtn = "Save Booking",
+                statusConfirmed = "Confirmed",
+                statusAdvancePaid = "Advance Paid",
+                statusPending = "Pending",
+                totalBookingCommitment = "Total Bookings Budget",
+                totalAdvancePaidTitle = "Total Advance Paid",
+                totalBalanceRemainingTitle = "Total Balance Due",
+                callVendor = "Call Vendor",
+                shareBookingSlip = "Share Booking Slip"
             )
             
             AppLanguage.HINGLISH -> AppStringResources(
@@ -615,7 +703,7 @@ object Localization {
                 tabDashboard = "Dashboard",
                 tabDonations = "Daan (दान)",
                 tabExpenses = "Kharcha (खर्च)",
-                tabHistory = "Logs & Events",
+                tabHistory = "History",
                 
                 allKirtans = "Sabhi Kirtan (Combined)",
                 switchKirtan = "Badlein",
@@ -798,7 +886,36 @@ object Localization {
                 resetBlankBtn = "Bilkul Saaf / Khali Reset",
                 
                 receiptTitle = "॥ Shri Kirtan Seva Daan Rasid ॥",
-                reportTitle = "Kirtan Hisaab-Kitaab Report"
+                reportTitle = "Kirtan Hisaab-Kitaab Report",
+
+                bookingOption = "Booking (बुकिंग)",
+                bookingSubtitle = "Garden, Singers, Sound, Halwai aur 13 Services ka hisaab",
+                bookingMenuTitle = "Booking Services Menu",
+                bookingMenuDesc = "Kirtan ke sabhi vendor aur seva booking ka hisaab",
+                openBookingMenu = "Menu Dekhein",
+                addBookingTitle = "Nayi Booking Jodein",
+                editBookingTitle = "Booking Edit Karein",
+                vendorNameLabel = "Vendor / Artist ka Naam",
+                vendorNamePlaceholder = "Jaise: Radhe Sound / Pt. Sharma ji",
+                vendorNameError = "Kripya vendor ya artist ka naam likhein",
+                contactNumberLabel = "Mobile Number",
+                contactNumberPlaceholder = "Jaise: 9876543210",
+                totalAmountLabel = "Kul Tay Raashi (₹)",
+                advancePaidLabel = "Advance Diya (₹)",
+                balanceDueLabel = "Baqaya Raashi",
+                bookingStatusLabel = "Booking Status",
+                bookingNotesLabel = "Notes / Khaas zarooratein",
+                noBookingsCategory = "Is category mein abhi koi booking nahi hai. Neeche button daba kar nayi booking jodein.",
+                addBookingBtn = "+ Booking Jodein",
+                saveBookingBtn = "Booking Save Karein",
+                statusConfirmed = "Confirmed (पुष्ट)",
+                statusAdvancePaid = "Advance Diya",
+                statusPending = "Pending (बाकी)",
+                totalBookingCommitment = "Kul Booking Budget",
+                totalAdvancePaidTitle = "Total Advance Diya",
+                totalBalanceRemainingTitle = "Total Baqaya",
+                callVendor = "Call Karein",
+                shareBookingSlip = "Booking Share Karein"
             )
         }
     }

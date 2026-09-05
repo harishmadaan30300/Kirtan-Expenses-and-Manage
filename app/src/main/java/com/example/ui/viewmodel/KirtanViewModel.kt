@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.data.database.AppDatabase
+import com.example.data.entity.BookingEntity
 import com.example.data.entity.DonationEntity
 import com.example.data.entity.ExpenseEntity
 import com.example.data.entity.KirtanEntity
@@ -17,6 +18,7 @@ import com.example.ui.theme.DevotionalPalette
 import com.example.ui.theme.ThemeMode
 import com.example.ui.util.BackupManager
 import com.example.ui.util.BackupPayload
+import com.example.ui.util.BookingCategory
 import com.example.ui.util.Formatters
 import com.example.ui.util.LocalBackupInfo
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -46,6 +49,14 @@ data class LogItem(
     val kirtanName: String,
     val rawDonation: DonationEntity? = null,
     val rawExpense: ExpenseEntity? = null
+)
+
+data class BookingSummary(
+    val totalBookings: Int = 0,
+    val totalAmount: Double = 0.0,
+    val totalAdvancePaid: Double = 0.0,
+    val totalBalanceRemaining: Double = 0.0,
+    val categoryCounts: Map<String, Int> = emptyMap()
 )
 
 data class DashboardSummary(
@@ -74,6 +85,11 @@ class KirtanViewModel(application: Application) : AndroidViewModel(application) 
     // Current Kirtan filtered donations & expenses
     val currentDonations: StateFlow<List<DonationEntity>>
     val currentExpenses: StateFlow<List<ExpenseEntity>>
+
+    // Bookings flows
+    val allBookings: StateFlow<List<BookingEntity>>
+    val currentBookings: StateFlow<List<BookingEntity>>
+    val bookingSummary: StateFlow<BookingSummary>
 
     // Dashboard summary
     val summary: StateFlow<DashboardSummary>
@@ -302,10 +318,17 @@ class KirtanViewModel(application: Application) : AndroidViewModel(application) 
         repository = KirtanRepository(
             database.kirtanDao(),
             database.donationDao(),
-            database.expenseDao()
+            database.expenseDao(),
+            database.bookingDao()
         )
 
         allKirtans = repository.allKirtans.stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            emptyList()
+        )
+
+        allBookings = repository.allBookings.stateIn(
             viewModelScope,
             SharingStarted.Eagerly,
             emptyList()
@@ -322,6 +345,28 @@ class KirtanViewModel(application: Application) : AndroidViewModel(application) 
             SharingStarted.Eagerly,
             emptyList()
         )
+
+        currentBookings = combine(allBookings, _selectedKirtanId) { bookings, kirtanId ->
+            if (kirtanId == null) bookings else bookings.filter { it.kirtanId == kirtanId }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+        bookingSummary = currentBookings.map { bookings ->
+            var totalAmt = 0.0
+            var advance = 0.0
+            val catCounts = mutableMapOf<String, Int>()
+            bookings.forEach {
+                totalAmt += it.totalAmount
+                advance += it.advancePaid
+                catCounts[it.categoryId] = (catCounts[it.categoryId] ?: 0) + 1
+            }
+            BookingSummary(
+                totalBookings = bookings.size,
+                totalAmount = totalAmt,
+                totalAdvancePaid = advance,
+                totalBalanceRemaining = (totalAmt - advance).coerceAtLeast(0.0),
+                categoryCounts = catCounts
+            )
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BookingSummary())
 
         currentDonations = combine(allDonationsFlow, _selectedKirtanId) { donations, kirtanId ->
             if (kirtanId == null) donations else donations.filter { it.kirtanId == kirtanId }
@@ -561,6 +606,64 @@ class KirtanViewModel(application: Application) : AndroidViewModel(application) 
             )
         )
 
+        // Sample Bookings for Kirtan 1
+        repository.insertBooking(
+            BookingEntity(
+                kirtanId = kirtan1Id,
+                categoryId = "garden_hall",
+                serviceTitle = "Garden / Hall",
+                vendorName = "श्री कृष्ण वाटिका एवं बैंक्वेट हॉल",
+                contactNumber = "9829012345",
+                eventDateMillis = now + 86400000L * 5,
+                totalAmount = 25000.0,
+                advancePaid = 10000.0,
+                status = "ADVANCE_PAID",
+                notes = "वातानुकूलित हॉल, 300 व्यक्तियों की बैठक व्यवस्था"
+            )
+        )
+        repository.insertBooking(
+            BookingEntity(
+                kirtanId = kirtan1Id,
+                categoryId = "singers",
+                serviceTitle = "Singers",
+                vendorName = "पंडित गोपाल शर्मा (भजन प्रवाह)",
+                contactNumber = "9876543210",
+                eventDateMillis = now + 86400000L * 5,
+                totalAmount = 15000.0,
+                advancePaid = 5000.0,
+                status = "CONFIRMED",
+                notes = "शाम 7 से रात 11 बजे तक श्री श्याम संकीर्तन"
+            )
+        )
+        repository.insertBooking(
+            BookingEntity(
+                kirtanId = kirtan1Id,
+                categoryId = "sound",
+                serviceTitle = "Sound",
+                vendorName = "स्टार डीजे & डिजिटल साउंड सिस्टम",
+                contactNumber = "9414098765",
+                eventDateMillis = now + 86400000L * 5,
+                totalAmount = 8000.0,
+                advancePaid = 3000.0,
+                status = "CONFIRMED",
+                notes = "6 कॉर्डलेस माइक, बेस स्पीकर और डिजिटल मिक्सर"
+            )
+        )
+        repository.insertBooking(
+            BookingEntity(
+                kirtanId = kirtan1Id,
+                categoryId = "halwai",
+                serviceTitle = "Halwai",
+                vendorName = "हलवाई कालू राम एवं पार्टी",
+                contactNumber = "9988776655",
+                eventDateMillis = now + 86400000L * 5,
+                totalAmount = 12000.0,
+                advancePaid = 4000.0,
+                status = "ADVANCE_PAID",
+                notes = "भोग प्रसाद, मोहनभोग, चूरमा एवं ठंडाई व्यवस्था"
+            )
+        )
+
         // Data for Kirtan 2 (Mata Ki Chowki)
         repository.insertDonation(
             DonationEntity(
@@ -726,6 +829,99 @@ class KirtanViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             repository.deleteExpense(expense)
         }
+    }
+
+    // Booking CRUD
+    fun addBooking(
+        categoryId: String,
+        serviceTitle: String,
+        vendorName: String,
+        contactNumber: String,
+        eventDateMillis: Long,
+        totalAmount: Double,
+        advancePaid: Double,
+        status: String = "CONFIRMED",
+        notes: String = "",
+        kirtanId: Long? = null,
+        onSuccess: (Long) -> Unit = {}
+    ) {
+        val targetKirtanId = kirtanId ?: _selectedKirtanId.value ?: allKirtans.value.firstOrNull()?.id
+        viewModelScope.launch {
+            val id = repository.insertBooking(
+                BookingEntity(
+                    kirtanId = targetKirtanId,
+                    categoryId = categoryId,
+                    serviceTitle = serviceTitle.ifBlank { BookingCategory.fromId(categoryId).englishTitle },
+                    vendorName = vendorName.trim(),
+                    contactNumber = contactNumber.trim(),
+                    eventDateMillis = eventDateMillis,
+                    totalAmount = totalAmount,
+                    advancePaid = advancePaid,
+                    status = status,
+                    notes = notes.trim()
+                )
+            )
+            onSuccess(id)
+        }
+    }
+
+    fun updateBooking(booking: BookingEntity) {
+        viewModelScope.launch {
+            repository.updateBooking(booking)
+        }
+    }
+
+    fun deleteBooking(booking: BookingEntity) {
+        viewModelScope.launch {
+            repository.deleteBooking(booking)
+        }
+    }
+
+    fun generateBookingReport(): String {
+        val kirtan = getSelectedKirtan()
+        val eventTitle = kirtan?.name ?: "समस्त कीर्तन सेवा (All Kirtans)"
+        val eventDate = kirtan?.let { Formatters.formatDateOnly(it.dateMillis) } ?: Formatters.formatDateOnly(System.currentTimeMillis())
+        val bSummary = bookingSummary.value
+        val list = currentBookings.value
+
+        val sb = StringBuilder()
+        sb.append("📋 *कीर्तन बुकिंग एवं सेवा व्यवस्था* 📋\n")
+        sb.append("━━━━━━━━━━━━━━━━━━━━\n")
+        sb.append("📍 *कार्यक्रम:* $eventTitle\n")
+        sb.append("📅 *दिनांक:* $eventDate\n")
+        sb.append("━━━━━━━━━━━━━━━━━━━━\n\n")
+
+        sb.append("💰 *कुल बजट:* ${Formatters.formatCurrency(bSummary.totalAmount)}\n")
+        sb.append("💵 *एडवांस जमा:* ${Formatters.formatCurrency(bSummary.totalAdvancePaid)}\n")
+        sb.append("⏳ *बाकी शेष:* ${Formatters.formatCurrency(bSummary.totalBalanceRemaining)}\n")
+        sb.append("🔢 *कुल बुक सेवाएं:* ${bSummary.totalBookings}\n\n")
+
+        if (list.isNotEmpty()) {
+            sb.append("🎪 *विस्तृत बुकिंग विवरण:*\n")
+            list.forEachIndexed { index, b ->
+                val cat = BookingCategory.fromId(b.categoryId)
+                val statusText = when (b.status) {
+                    "CONFIRMED" -> "✓ पुष्ट"
+                    "ADVANCE_PAID" -> "💵 एडवांस जमा"
+                    "COMPLETED" -> "⭐ संपन्न"
+                    else -> "⏳ लंबित"
+                }
+                sb.append("${index + 1}. ${cat.icon} *${cat.hindiTitle}*\n")
+                sb.append("   • वेंडर/कलाकार: *${b.vendorName}*\n")
+                if (b.contactNumber.isNotBlank()) {
+                    sb.append("   • फोन: ${b.contactNumber}\n")
+                }
+                sb.append("   • तय राशि: ${Formatters.formatCurrency(b.totalAmount)} | एडवांस: ${Formatters.formatCurrency(b.advancePaid)} | शेष: ${Formatters.formatCurrency((b.totalAmount - b.advancePaid).coerceAtLeast(0.0))}\n")
+                sb.append("   • स्थिति: $statusText\n")
+                if (b.notes.isNotBlank()) {
+                    sb.append("   • विवरण: ${b.notes}\n")
+                }
+                sb.append("\n")
+            }
+        }
+        sb.append("━━━━━━━━━━━━━━━━━━━━\n")
+        sb.append("॥ श्री राधे-श्याम ॥")
+        return sb.toString()
     }
 
     // Generate Shareable Transparency Report

@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,9 +19,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -45,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.entity.BookingEntity
 import com.example.data.entity.DonationEntity
 import com.example.data.entity.ExpenseEntity
 import com.example.data.entity.KirtanEntity
@@ -78,8 +82,10 @@ import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.UpiBlue
 import com.example.ui.theme.UpiBlueLight
+import com.example.ui.util.BookingCategory
 import com.example.ui.util.Formatters
 import com.example.ui.util.Localization
+import com.example.ui.viewmodel.BookingSummary
 import com.example.ui.viewmodel.DashboardSummary
 
 private fun extractInitials(name: String, fallback: String = "KS"): String {
@@ -99,12 +105,15 @@ fun DashboardScreen(
     summary: DashboardSummary,
     recentDonations: List<DonationEntity>,
     recentExpenses: List<ExpenseEntity>,
+    bookings: List<BookingEntity> = emptyList(),
+    bookingSummary: BookingSummary = BookingSummary(),
     onAddDonation: () -> Unit,
     onAddExpense: () -> Unit,
     onSelectDonation: (DonationEntity) -> Unit,
     onShareReport: () -> Unit,
     onNavigateToDonations: () -> Unit,
     onNavigateToExpenses: () -> Unit,
+    onOpenBookingMenu: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalAppColors.current
@@ -356,6 +365,164 @@ fun DashboardScreen(
                             fontWeight = FontWeight.SemiBold,
                             color = colors.expenseBtnText
                         )
+                    }
+                }
+            }
+        }
+
+        // Booking Option Section (Home page par Booking naam se option with 13 services)
+        item {
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = colors.cardBg),
+                border = BorderStroke(1.2.dp, colors.primary.copy(alpha = 0.4f)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onOpenBookingMenu() }
+                    .testTag("home_booking_option_card")
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    // Header Row with Icon, Title, and Action button
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(CircleShape)
+                                    .background(colors.primaryContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(text = "🎪", fontSize = 20.sp)
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = strings.bookingOption,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.textPrimary
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = colors.primary.copy(alpha = 0.15f)
+                                    ) {
+                                        Text(
+                                            text = "13 Services",
+                                            fontSize = 9.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = colors.primary,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = strings.bookingSubtitle,
+                                    fontSize = 11.sp,
+                                    color = colors.textSecondary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
+                        Surface(
+                            onClick = onOpenBookingMenu,
+                            shape = RoundedCornerShape(14.dp),
+                            color = colors.primary,
+                            modifier = Modifier.testTag("home_open_booking_btn")
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = strings.openBookingMenu,
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Booking Stats Bar if bookings exist
+                    if (bookingSummary.totalBookings > 0) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(colors.primaryContainer.copy(alpha = 0.4f))
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "📋 ${bookingSummary.totalBookings} सेवाएं बुक",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.onPrimaryContainer
+                            )
+                            Text(
+                                text = "कुल: ${Formatters.formatCurrency(bookingSummary.totalAmount)} | एडवांस: ${Formatters.formatCurrency(bookingSummary.totalAdvancePaid)}",
+                                fontSize = 10.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.onPrimaryContainer
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+
+                    // 13 Services Icons Preview Strip
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        BookingCategory.ALL_CATEGORIES.forEach { category ->
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = colors.canvas,
+                                border = BorderStroke(0.8.dp, colors.cardBorder),
+                                modifier = Modifier.clickable { onOpenBookingMenu() }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(text = category.icon, fontSize = 12.sp)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = category.englishTitle,
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = colors.textPrimary
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

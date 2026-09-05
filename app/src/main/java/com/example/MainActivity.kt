@@ -1,5 +1,6 @@
 package com.example
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -45,14 +46,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.data.entity.BookingEntity
 import com.example.data.entity.DonationEntity
 import com.example.data.entity.ExpenseEntity
 import com.example.data.entity.KirtanEntity
+import com.example.ui.components.AddBookingDialog
 import com.example.ui.components.AddDonationDialog
 import com.example.ui.components.AddExpenseDialog
 import com.example.ui.components.AddKirtanDialog
@@ -61,6 +65,7 @@ import com.example.ui.components.DevotionalHeader
 import com.example.ui.components.ReceiptDialog
 import com.example.ui.components.SettingsDialog
 import com.example.ui.components.TransparencyReportDialog
+import com.example.ui.screens.BookingScreen
 import com.example.ui.screens.DashboardScreen
 import com.example.ui.screens.DonationsScreen
 import com.example.ui.screens.ExpensesScreen
@@ -68,6 +73,7 @@ import com.example.ui.screens.HistoryAndEventsScreen
 import com.example.ui.theme.LocalAppColors
 import com.example.ui.theme.LocalAppLanguage
 import com.example.ui.theme.MyApplicationTheme
+import com.example.ui.util.BookingCategory
 import com.example.ui.util.Localization
 import com.example.ui.viewmodel.KirtanViewModel
 
@@ -96,15 +102,18 @@ enum class NavigationTab(val title: String, val hindiTitle: String) {
     DASHBOARD("Dashboard", "डैशबोर्ड"),
     DONATIONS("Donations", "दान (Daan)"),
     EXPENSES("Expenses", "खर्च (Kharcha)"),
-    HISTORY("Logs & Events", "इतिहास (Logs)")
+    HISTORY("History", "इतिहास")
 }
 
 @Composable
 fun KirtanApp(viewModel: KirtanViewModel = viewModel()) {
+    val context = LocalContext.current
     val allKirtans by viewModel.allKirtans.collectAsState()
     val selectedKirtanId by viewModel.selectedKirtanId.collectAsState()
     val donations by viewModel.currentDonations.collectAsState()
     val expenses by viewModel.currentExpenses.collectAsState()
+    val bookings by viewModel.currentBookings.collectAsState()
+    val bookingSummary by viewModel.bookingSummary.collectAsState()
     val summary by viewModel.summary.collectAsState()
     val historyLogs by viewModel.historyLogs.collectAsState()
     val themeMode by viewModel.themeMode.collectAsState()
@@ -130,6 +139,11 @@ fun KirtanApp(viewModel: KirtanViewModel = viewModel()) {
 
     var showAddKirtanDialog by remember { mutableStateOf(false) }
     var editingKirtan by remember { mutableStateOf<KirtanEntity?>(null) }
+
+    var showBookingScreen by remember { mutableStateOf(false) }
+    var showAddBookingDialog by remember { mutableStateOf(false) }
+    var editingBooking by remember { mutableStateOf<BookingEntity?>(null) }
+    var activeBookingCategory by remember { mutableStateOf(BookingCategory.GARDEN_HALL.id) }
 
     var viewingReceiptDonation by remember { mutableStateOf<DonationEntity?>(null) }
     var showTransparencyReportDialog by remember { mutableStateOf(false) }
@@ -184,11 +198,14 @@ fun KirtanApp(viewModel: KirtanViewModel = viewModel()) {
 
                     // Tab 1: Dashboard
                     NavigationBarItem(
-                        selected = currentTab == NavigationTab.DASHBOARD,
-                        onClick = { currentTab = NavigationTab.DASHBOARD },
+                        selected = currentTab == NavigationTab.DASHBOARD && !showBookingScreen,
+                        onClick = {
+                            currentTab = NavigationTab.DASHBOARD
+                            showBookingScreen = false
+                        },
                         icon = {
                             Icon(
-                                imageVector = if (currentTab == NavigationTab.DASHBOARD) Icons.Default.Dashboard else Icons.Outlined.Dashboard,
+                                imageVector = if (currentTab == NavigationTab.DASHBOARD && !showBookingScreen) Icons.Default.Dashboard else Icons.Outlined.Dashboard,
                                 contentDescription = "Dashboard"
                             )
                         },
@@ -196,7 +213,7 @@ fun KirtanApp(viewModel: KirtanViewModel = viewModel()) {
                             Text(
                                 text = strings.tabDashboard,
                                 fontSize = 10.5.sp,
-                                fontWeight = if (currentTab == NavigationTab.DASHBOARD) FontWeight.Bold else FontWeight.Medium
+                                fontWeight = if (currentTab == NavigationTab.DASHBOARD && !showBookingScreen) FontWeight.Bold else FontWeight.Medium
                             )
                         },
                         colors = itemColors,
@@ -206,7 +223,10 @@ fun KirtanApp(viewModel: KirtanViewModel = viewModel()) {
                     // Tab 2: Donations
                     NavigationBarItem(
                         selected = currentTab == NavigationTab.DONATIONS,
-                        onClick = { currentTab = NavigationTab.DONATIONS },
+                        onClick = {
+                            currentTab = NavigationTab.DONATIONS
+                            showBookingScreen = false
+                        },
                         icon = {
                             Icon(
                                 imageVector = if (currentTab == NavigationTab.DONATIONS) Icons.Default.VolunteerActivism else Icons.Outlined.VolunteerActivism,
@@ -227,7 +247,10 @@ fun KirtanApp(viewModel: KirtanViewModel = viewModel()) {
                     // Tab 3: Expenses
                     NavigationBarItem(
                         selected = currentTab == NavigationTab.EXPENSES,
-                        onClick = { currentTab = NavigationTab.EXPENSES },
+                        onClick = {
+                            currentTab = NavigationTab.EXPENSES
+                            showBookingScreen = false
+                        },
                         icon = {
                             Icon(
                                 imageVector = if (currentTab == NavigationTab.EXPENSES) Icons.Default.ReceiptLong else Icons.Outlined.ReceiptLong,
@@ -248,11 +271,14 @@ fun KirtanApp(viewModel: KirtanViewModel = viewModel()) {
                     // Tab 4: History & Kirtans
                     NavigationBarItem(
                         selected = currentTab == NavigationTab.HISTORY,
-                        onClick = { currentTab = NavigationTab.HISTORY },
+                        onClick = {
+                            currentTab = NavigationTab.HISTORY
+                            showBookingScreen = false
+                        },
                         icon = {
                             Icon(
                                 imageVector = if (currentTab == NavigationTab.HISTORY) Icons.Default.History else Icons.Outlined.History,
-                                contentDescription = "Logs"
+                                contentDescription = "History"
                             )
                         },
                         label = {
@@ -297,28 +323,62 @@ fun KirtanApp(viewModel: KirtanViewModel = viewModel()) {
         ) {
             when (currentTab) {
                 NavigationTab.DASHBOARD -> {
-                    DashboardScreen(
-                        currentKirtan = currentKirtan,
-                        summary = summary,
-                        recentDonations = donations,
-                        recentExpenses = expenses,
-                        onAddDonation = {
-                            editingDonation = null
-                            showAddDonationDialog = true
-                        },
-                        onAddExpense = {
-                            editingExpense = null
-                            showAddExpenseDialog = true
-                        },
-                        onSelectDonation = { donation ->
-                            viewingReceiptDonation = donation
-                        },
-                        onShareReport = {
-                            showTransparencyReportDialog = true
-                        },
-                        onNavigateToDonations = { currentTab = NavigationTab.DONATIONS },
-                        onNavigateToExpenses = { currentTab = NavigationTab.EXPENSES }
-                    )
+                    if (showBookingScreen) {
+                        BookingScreen(
+                            currentKirtan = currentKirtan,
+                            bookings = bookings,
+                            bookingSummary = bookingSummary,
+                            onBack = { showBookingScreen = false },
+                            onAddBooking = { categoryId ->
+                                activeBookingCategory = categoryId
+                                editingBooking = null
+                                showAddBookingDialog = true
+                            },
+                            onEditBooking = { booking ->
+                                editingBooking = booking
+                                activeBookingCategory = booking.categoryId
+                                showAddBookingDialog = true
+                            },
+                            onDeleteBooking = { booking ->
+                                deleteConfirmationTarget = booking
+                            },
+                            onShareReport = {
+                                val report = viewModel.generateBookingReport()
+                                val sendIntent = Intent().apply {
+                                    action = Intent.ACTION_SEND
+                                    putExtra(Intent.EXTRA_TEXT, report)
+                                    type = "text/plain"
+                                }
+                                context.startActivity(Intent.createChooser(sendIntent, "Share Booking Report"))
+                            }
+                        )
+                    } else {
+                        DashboardScreen(
+                            currentKirtan = currentKirtan,
+                            summary = summary,
+                            recentDonations = donations,
+                            recentExpenses = expenses,
+                            bookings = bookings,
+                            bookingSummary = bookingSummary,
+                            onAddDonation = {
+                                editingDonation = null
+                                showAddDonationDialog = true
+                            },
+                            onAddExpense = {
+                                editingExpense = null
+                                showAddExpenseDialog = true
+                            },
+                            onSelectDonation = { donation ->
+                                viewingReceiptDonation = donation
+                            },
+                            onShareReport = {
+                                showTransparencyReportDialog = true
+                            },
+                            onNavigateToDonations = { currentTab = NavigationTab.DONATIONS },
+                            onNavigateToExpenses = { currentTab = NavigationTab.EXPENSES },
+                            onOpenBookingMenu = { showBookingScreen = true }
+                        )
+                    }
                 }
 
                 NavigationTab.DONATIONS -> {
@@ -512,6 +572,50 @@ fun KirtanApp(viewModel: KirtanViewModel = viewModel()) {
         )
     }
 
+    // Add / Edit Booking Dialog
+    if (showAddBookingDialog) {
+        AddBookingDialog(
+            initialBooking = editingBooking,
+            defaultCategoryId = activeBookingCategory,
+            onDismiss = {
+                showAddBookingDialog = false
+                editingBooking = null
+            },
+            onConfirm = { categoryId, serviceTitle, vendorName, contactNumber, eventDateMillis, totalAmount, advancePaid, status, notes ->
+                val currentEditing = editingBooking
+                if (currentEditing != null) {
+                    viewModel.updateBooking(
+                        currentEditing.copy(
+                            categoryId = categoryId,
+                            serviceTitle = serviceTitle,
+                            vendorName = vendorName,
+                            contactNumber = contactNumber,
+                            eventDateMillis = eventDateMillis,
+                            totalAmount = totalAmount,
+                            advancePaid = advancePaid,
+                            status = status,
+                            notes = notes
+                        )
+                    )
+                } else {
+                    viewModel.addBooking(
+                        categoryId = categoryId,
+                        serviceTitle = serviceTitle,
+                        vendorName = vendorName,
+                        contactNumber = contactNumber,
+                        eventDateMillis = eventDateMillis,
+                        totalAmount = totalAmount,
+                        advancePaid = advancePaid,
+                        status = status,
+                        notes = notes
+                    )
+                }
+                showAddBookingDialog = false
+                editingBooking = null
+            }
+        )
+    }
+
     // Donation Receipt Slip Dialog
     viewingReceiptDonation?.let { donation ->
         val kirtanName = allKirtans.find { it.id == donation.kirtanId }?.name ?: "कीर्तन सेवा"
@@ -611,6 +715,17 @@ fun KirtanApp(viewModel: KirtanViewModel = viewModel()) {
                     message = "क्या आप '${target.name}' और इससे जुड़े सभी दान एवं खर्च रिकॉर्ड हटाना चाहते हैं?",
                     onConfirm = {
                         viewModel.deleteKirtan(target)
+                        deleteConfirmationTarget = null
+                    },
+                    onDismiss = { deleteConfirmationTarget = null }
+                )
+            }
+            is BookingEntity -> {
+                ConfirmDeleteDialog(
+                    title = "बुकिंग रिकॉर्ड हटाएं?",
+                    message = "क्या आप '${target.vendorName}' (${target.serviceTitle}) का बुकिंग रिकॉर्ड हटाना चाहते हैं?",
+                    onConfirm = {
+                        viewModel.deleteBooking(target)
                         deleteConfirmationTarget = null
                     },
                     onDismiss = { deleteConfirmationTarget = null }
